@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="collapse show" id="dataMatrixMenu">
+        <h3>Generate DM</h3>
+        <div class="card card-body">
+            <form id="generateForm">
+                <div class="mb-3">
+                    <textarea name="DMText" class="form-control" rows="4" placeholder="Please input DataMatrixes (one in each one row)">{{ datamatrix_text }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Generate</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-center"> <!-- Обернуть таблицу в контейнер с классом text-center -->
+        <div id="dataMatrixTable" class="mt-4" style="display: none;">
+            <h3>Сгенерированная таблица:</h3>
+            <table class="table table-bordered">
+                <!-- ... -->
+            </table>
+        </div>
+    </div>
+
+    <!--Вводить можно сюда Если надо еще текст
+    -->
+
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+   <div class="table-responsive" id="dataMatrixTable">
+    <table class="table table-bordered">
+    </table>
+</div>
+
+<script>
+        // Отправка формы и обработка ответа
+        $('#generateForm').submit(function(e) {
+            e.preventDefault();
+
+            var datamatrixText = $('textarea[name="DMText"]').val();
+            if (datamatrixText.trim() === '') {
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '/datamatrix',
+                data: $(this).serialize(),
+                success: function(response) {
+                    console.log(response);
+
+                    $('#dataMatrixTable').empty().hide(); // Очищаем и скрываем таблицу
+
+                    var table = $('<table></table>').addClass('table table-bordered');
+
+                    var fileNames = response.file_names;
+                    var gtins = response.gtins;
+                    var rowCount = Math.ceil(fileNames.length / 4);
+
+                    for (var i = 0; i < rowCount; i++) {
+                        var row = $('<tr></tr>');
+
+                        for (var j = i * 4; j < i * 4 + 4; j++) {
+                            if (j < fileNames.length) {
+                                var cell = $('<td></td>');
+                                var image = $('<img>').attr('src', 'static/Matrixes/' + fileNames[j]).addClass('img-fluid').attr('alt', 'Datamatrix Image');
+                                var text = $('<p></p>').addClass('pTextDM').text(gtins[j]);
+
+                                cell.append(image);
+                                cell.append(text);
+                                row.append(cell);
+                            }
+                        }
+
+                        table.append(row);
+                    }
+
+                    $('#dataMatrixTable').append(table);
+                    $('#dataMatrixTable').show();
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+
